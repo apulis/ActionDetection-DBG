@@ -4,7 +4,7 @@ sys.path.append('.')
 import os
 
 import tensorflow as tf
-import tqdm
+import mmcv
 
 import data_loader
 import utils
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     """ Run DBG model 
     """
     print('Runing DBG model ...')
-    for idx in tqdm.tqdm(range(len(batch_video_list))):
+    for idx in mmcv.track_iter_progress(range(len(batch_video_list))):
         """ Get batch data 
         """
         batch_anchor_xmin, batch_anchor_xmax, batch_anchor_feature = \

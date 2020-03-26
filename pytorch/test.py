@@ -4,7 +4,7 @@ sys.path.append('.')
 import os
 
 import numpy as np
-import tqdm
+import mmcv
 
 import data_loader
 import utils
@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
         """ runing DBG model """
         print('Runing DBG model ...')
-        for idx in tqdm.tqdm(range(len(batch_video_list))):
+        for idx in mmcv.track_iter_progress(range(len(batch_video_list))):
             batch_anchor_xmin, batch_anchor_xmax, batch_anchor_feature = \
                 data_loader.getProposalDataTest(batch_video_list[idx], dbg_config)
             in_feature = torch.from_numpy(batch_anchor_feature).float().cuda().permute(0, 2, 1)

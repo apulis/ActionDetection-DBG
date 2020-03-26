@@ -6,7 +6,7 @@ import threading
 
 import numpy as np
 import pandas as pd
-import tqdm
+import mmcv
 
 from utils import getDatasetDict
 
@@ -99,14 +99,12 @@ def sub_processor(lock, pid, video_list):
     :param video_list: video list assigned to each subprocess
     :return: None
     """
-    text = 'processor %d' % pid
-    with lock:
-        progress = tqdm.tqdm(
-            total=len(video_list),
-            position=pid,
-            desc=text
-        )
-    for i in range(len(video_list)):
+    if pid == 0:
+        video_range = mmcv.track_iter_progress(range(len(video_list)))
+    else:
+        video_range = range(len(video_list))
+
+    for i in video_range:
         video_name = video_list[i]
         """ Read result csv file """
         df = pd.read_csv(os.path.join(result_dir, video_name + ".csv"))
@@ -129,8 +127,6 @@ def sub_processor(lock, pid, video_list):
         with lock:
             progress.update(1)
 
-    with lock:
-        progress.close()
 
 video_info_file = 'data/video_info_19993.json'
 train_dict, val_dict, test_dict = getDatasetDict(video_info_file)

@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 import pandas as pd
-import tqdm
+import mmcv
 
 
 def load_json(file):
@@ -299,7 +299,7 @@ def save_proposals_result(batch_video_list,
     columns = ["iou", "start", "end", "xmin", "xmax"]
     """for each batch video list
     """
-    for idx in tqdm.tqdm(range(len(batch_video_list))):
+    for idx in mmcv.track_iter_progress(range(len(batch_video_list))):
         b_video = batch_video_list[idx]
         b_xmin = batch_result_xmin[idx]
         b_xmax = batch_result_xmax[idx]

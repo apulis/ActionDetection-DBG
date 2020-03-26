@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import tqdm
+import mmcv
 from data_loader import DBGDataSet, gen_mask
 from model import DBG
 from torch.utils.data import DataLoader
@@ -121,7 +121,7 @@ def DBG_train(net, dl_iter, optimizer, epoch, training):
     loss_end_val = 0
     cost_val = 0
     for n_iter, \
-        (gt_action, gt_start, gt_end, feature, iou_label) in tqdm.tqdm(enumerate(dl_iter)):
+        (gt_action, gt_start, gt_end, feature, iou_label) in enumerate(mmcv.track_iter_progress(dl_iter)):
         gt_action = gt_action.cuda()
         gt_start = gt_start.cuda()
         gt_end = gt_end.cuda()

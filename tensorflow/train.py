@@ -4,7 +4,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
-import tqdm
+import mmcv
 
 import data_loader
 from config_loader import dbg_config
@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
         mini_info = {"cost": [], "loss_action": [], "loss_start": [], "loss_end": [], "l2": [],
                      'loss_iou': [], 'loss_st': []}
-        for idx in tqdm.tqdm(range(len(batch_video_list))):
+        for idx in mmcv.track_iter_progress(range(len(batch_video_list))):
             # get batch data
             batch_label_action, batch_label_start, batch_label_end, \
             batch_anchor_feature, batch_iou_label = data_loader.getBatchData(
