@@ -14,9 +14,9 @@ saver:
 training:
   learning_rate: [1e-3, 1e-4]
   lr_epochs: [8, 4]
-  batch_size: 16
+  batch_size: 64
 
 testing:
   mode: validation
   # mode: testing
-  batch_size: 16
+  batch_size: 64

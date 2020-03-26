@@ -221,9 +221,9 @@ if __name__ == '__main__':
         print('Only train on GPU.')
         exit()
     torch.backends.cudnn.enabled = False # set False to speed up Conv3D operation
-    set_seed(2020)
+    # set_seed(2020)
     net = DBG(feature_dim)
-    net = nn.DataParallel(net, device_ids=[0]).cuda()
+    net = nn.DataParallel(net).cuda()
 
     # set weight decay for different parameters
     Net_bias = []
@@ -262,9 +262,9 @@ if __name__ == '__main__':
                                                   lambda x: learning_rate[x])
     # setup training and validation data loader
     train_dl = DataLoader(DBGDataSet(mode='training'), batch_size=batch_size,
-                          shuffle=True, num_workers=0, drop_last=True, pin_memory=True)
+                          shuffle=True, num_workers=2, drop_last=True, pin_memory=True)
     val_dl = DataLoader(DBGDataSet(mode='validation'), batch_size=batch_size,
-                        shuffle=False, num_workers=0, drop_last=True, pin_memory=True)
+                        shuffle=False, num_workers=2, drop_last=True, pin_memory=True)
 
     # train DBG
     for i in range(epoch_num):

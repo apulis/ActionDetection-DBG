@@ -124,8 +124,6 @@ def sub_processor(lock, pid, video_list):
                                        min(1, df.xmax.values[j]) * video_duration]
             proposal_list.append(tmp_proposal)
         result_dict[video_name[2:]] = proposal_list
-        with lock:
-            progress.update(1)
 
 
 video_info_file = 'data/video_info_19993.json'

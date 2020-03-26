@@ -68,6 +68,8 @@ if __name__ == "__main__":
         else:
             video_dict = test_dict
 
+        print('testing.mode: {}'.format(test_mode))
+
         batch_video_list = data_loader.getBatchListTest(video_dict, batch_size)
 
         batch_result_xmin = []
