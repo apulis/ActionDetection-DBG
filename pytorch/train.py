@@ -261,14 +261,18 @@ if __name__ == '__main__':
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer,
                                                   lambda x: learning_rate[x])
     # setup training and validation data loader
-    train_dl = DataLoader(DBGDataSet(mode='training'), batch_size=batch_size,
-                          shuffle=True, num_workers=2, drop_last=True, pin_memory=True)
-    val_dl = DataLoader(DBGDataSet(mode='validation'), batch_size=batch_size,
-                        shuffle=False, num_workers=2, drop_last=True, pin_memory=True)
+    train_dl = DataLoader(DBGDataSet(mode='training'),
+                          batch_size=batch_size,
+                          shuffle=True, num_workers=2,
+                          drop_last=True, pin_memory=True)
+    val_dl = DataLoader(DBGDataSet(mode='validation'),
+                        batch_size=batch_size,
+                        shuffle=False, num_workers=2,
+                        drop_last=True, pin_memory=True)
 
     # train DBG
     for i in range(epoch_num):
-        scheduler.step(i)
-        print('current learning rate:', scheduler.get_lr()[0])
+        print('current learning rate:', scheduler.get_last_lr()[0])
         DBG_train(net, train_dl, optimizer, i, training=True)
         DBG_train(net, val_dl, optimizer, i, training=False)
+        scheduler.step(i)

@@ -32,3 +32,9 @@ Thumbs.db
 .idea/*
 *.iml
 /out/*
+.vscode/settings.json
+output/model
+build
+*.egg-info
+*.egg
+.ipynb_checkpoints

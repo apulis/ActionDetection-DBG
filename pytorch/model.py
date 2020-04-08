@@ -31,7 +31,7 @@ def conv1d(in_channels, out_channels, kernel_size=3,
     if is_relu:
         if relu_type == 'prelu':
             relu = get_relu(relu_type)()
-        elif relu_type == 'DYReLU2':
+        elif relu_type == 'dyrelu':
             relu = get_relu(relu_type)(out_channels, out_channels)
         else:
             relu = get_relu(relu_type)(inplace=True)
@@ -61,7 +61,7 @@ def conv2d(in_channels, out_channels, kernel_size=3,
     if is_relu:
         if relu_type == 'prelu':
             relu = get_relu(relu_type)()
-        elif relu_type == 'DYReLU2':
+        elif relu_type == 'dyrelu':
             relu = get_relu(relu_type)(out_channels, out_channels)
         else:
             relu = get_relu(relu_type)(inplace=True)
@@ -86,12 +86,12 @@ class DSBaseNet(nn.Module):
         super(DSBaseNet, self).__init__()
         feature_dim = feature_dim // 2
         self.feature_dim = feature_dim
-        self.conv1_1 = conv1d(feature_dim, 256, 3, relu_type=activation)
-        self.conv1_2 = conv1d(256, 128, 3, relu_type=activation)
+        self.conv1_1 = conv1d(feature_dim, 256, 3, relu_type='relu')
+        self.conv1_2 = conv1d(256, 128, 3, relu_type='relu')
         self.conv1_3 = conv1d(128, 1, 1, is_relu=False)
 
-        self.conv2_1 = conv1d(feature_dim, 256, 3, relu_type=activation)
-        self.conv2_2 = conv1d(256, 128, 3, relu_type=activation)
+        self.conv2_1 = conv1d(feature_dim, 256, 3, relu_type='relu')
+        self.conv2_2 = conv1d(256, 128, 3, relu_type='relu')
         self.conv2_3 = conv1d(128, 1, 1, is_relu=False)
 
         self.conv3 = conv1d(128, 1, 1, is_relu=False)
@@ -147,7 +147,7 @@ class ACRNet(nn.Module):
     """
     Setup action classification regression network (ACR)
     """
-    def __init__(self, in_channels=32, activation):
+    def __init__(self, in_channels=32, activation='relu'):
         super(ACRNet, self).__init__()
         self.conv2d = nn.Sequential(
             conv2d(in_channels, 256, 1, relu_type=activation),
@@ -167,7 +167,7 @@ class TBCNet(nn.Module):
     """
     Setup temporal boundary classification network (TBC)
     """
-    def __init__(self, in_channels=512, activation):
+    def __init__(self, in_channels=512, activation='relu'):
         super(TBCNet, self).__init__()
         self.conv2d = nn.Sequential(
             conv2d(in_channels, 256, 1, relu_type=activation),
@@ -200,7 +200,7 @@ class DBG(nn.Module):
         self.TBCNet = TBCNet(activation=activation)
 
         self.best_loss = 999999
-        self.reset_params() # reset all params by glorot uniform
+        self.reset_params()  # reset all params by glorot uniform
 
     @staticmethod
     def glorot_uniform_(tensor):
@@ -223,7 +223,7 @@ class DBG(nn.Module):
     def forward(self, x):
         DSB_output = self.DSBNet(x)
         action_feat, net_feat = self.PropFeatGen(DSB_output['score'], DSB_output['xc_feat'])
-        iou = self.ACRNet(action_feat, self.activation)
+        iou = self.ACRNet(action_feat)
         prop_start, prop_end = self.TBCNet(net_feat)
 
         output_dict = {

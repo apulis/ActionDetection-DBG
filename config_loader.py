@@ -3,6 +3,7 @@ import argparse
 import yaml
 import os
 
+
 class DBGConfig():
     """ DBG config
     Load DBG config from yaml files.
@@ -10,9 +11,12 @@ class DBGConfig():
     def __init__(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('config_file', type=str, default='config/config.yaml', nargs='?')
+        parser.add_argument('activation', type=str, default='',
+            choices=['relu', 'lrelu', 'rrelu', 'prelu', 'relu6', 'elu', 'selu', 'dyrelu'])
         args = parser.parse_args()
 
         print('loading config file: %s' % args.config_file)
+        print('activation: %s' % args.activation)
 
         """ Load yaml file """
         with open(args.config_file, 'r', encoding='utf-8') as f:
@@ -44,7 +48,7 @@ class DBGConfig():
         
         """ Set model information """
         model_info = data['model']
-        self.activation = model_info['activation']
+        self.activation = args.activation if args.activation != '' else model_info['activation']
 
         """ Set training information """
         training_info = data['training']

@@ -68,12 +68,21 @@ def getDatasetDict(video_info_file, video_filter=False):
         video_new_info["duration_second"] = video_info["duration"]
         video_subset = video_info['subset']
         video_new_info["annotations"] = video_info["annotations"]
+        
+        __debug_on__, __debug_data_len__ = False, 32
         if video_subset == "training":
+            if __debug_on__ and len(train_dict) == __debug_data_len__:
+                continue
             train_dict[video_name] = video_new_info
         elif video_subset == "validation":
+            if __debug_on__ and len(val_dict) == __debug_data_len__:
+                continue
             val_dict[video_name] = video_new_info
         elif video_subset == "testing":
+            if __debug_on__ and len(test_dict) == __debug_data_len__:
+                continue
             test_dict[video_name] = video_new_info
+
     return train_dict, val_dict, test_dict
 
 
@@ -161,9 +170,7 @@ def getFullData(video_dict, dbg_config, last_channel=True, training=True):
 
     train_video_mean_len = []
 
-    for i in range(len(video_list)):
-        if i % 100 == 0:
-            print("%d / %d videos are loaded" % (i, len(video_list)))
+    for i in mmcv.track_iter_progress(range(len(video_list))):
         video_name = video_list[i]
         video_info = video_dict[video_name]
         video_second = video_info["duration_second"]
