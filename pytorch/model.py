@@ -2,9 +2,24 @@ import numpy as np
 import torch
 import torch.nn as nn
 from custom_op.prop_tcfg_op import PropTcfg
+from DynamicRELU import DYReLU2
 
 
-def conv1d(in_channels, out_channels, kernel_size=3, is_relu=True):
+def get_relu(relu_type):
+    relus = {'relu': nn.ReLU,
+             'lrelu': nn.LeakyReLU,
+             'rrelu': nn.RReLU,
+             'prelu': nn.PReLU,
+             'relu6': nn.ReLU6,
+             'elu': nn.ELU,
+             'selu': nn.SELU,
+             'dyrelu': DYReLU2
+             }
+    return relus[relu_type]
+
+
+def conv1d(in_channels, out_channels, kernel_size=3,
+           is_relu=True, relu_type='relu'):
     """
     Construct Conv1D operation
     :param in_channels: channel number of input tensor
@@ -14,10 +29,17 @@ def conv1d(in_channels, out_channels, kernel_size=3, is_relu=True):
     :return: Conv1D module
     """
     if is_relu:
+        if relu_type == 'prelu':
+            relu = get_relu(relu_type)()
+        elif relu_type == 'DYReLU2':
+            relu = get_relu(relu_type)(out_channels, out_channels)
+        else:
+            relu = get_relu(relu_type)(inplace=True)
+
         return nn.Sequential(
             nn.Conv1d(in_channels, out_channels, kernel_size,
                       padding=(kernel_size - 1) // 2),
-            nn.ReLU(inplace=True)
+            relu
         )
     else:
         return nn.Sequential(
@@ -26,7 +48,8 @@ def conv1d(in_channels, out_channels, kernel_size=3, is_relu=True):
         )
 
 
-def conv2d(in_channels, out_channels, kernel_size=3, is_relu=True):
+def conv2d(in_channels, out_channels, kernel_size=3,
+           is_relu=True, relu_type='relu'):
     """
     Construct Conv2D operation
     :param in_channels: channel number of input tensor
@@ -36,10 +59,17 @@ def conv2d(in_channels, out_channels, kernel_size=3, is_relu=True):
     :return: Conv2D module
     """
     if is_relu:
+        if relu_type == 'prelu':
+            relu = get_relu(relu_type)()
+        elif relu_type == 'DYReLU2':
+            relu = get_relu(relu_type)(out_channels, out_channels)
+        else:
+            relu = get_relu(relu_type)(inplace=True)
+
         return nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size,
                       padding=(kernel_size - 1) // 2),
-            nn.ReLU(inplace=True)
+            relu
         )
     else:
         return nn.Sequential(
@@ -52,16 +82,16 @@ class DSBaseNet(nn.Module):
     """
     Setup dual stream base network (DSB)
     """
-    def __init__(self, feature_dim):
+    def __init__(self, feature_dim, activation):
         super(DSBaseNet, self).__init__()
         feature_dim = feature_dim // 2
         self.feature_dim = feature_dim
-        self.conv1_1 = conv1d(feature_dim, 256, 3)
-        self.conv1_2 = conv1d(256, 128, 3)
+        self.conv1_1 = conv1d(feature_dim, 256, 3, relu_type=activation)
+        self.conv1_2 = conv1d(256, 128, 3, relu_type=activation)
         self.conv1_3 = conv1d(128, 1, 1, is_relu=False)
 
-        self.conv2_1 = conv1d(feature_dim, 256, 3)
-        self.conv2_2 = conv1d(256, 128, 3)
+        self.conv2_1 = conv1d(feature_dim, 256, 3, relu_type=activation)
+        self.conv2_2 = conv1d(256, 128, 3, relu_type=activation)
         self.conv2_3 = conv1d(128, 1, 1, is_relu=False)
 
         self.conv3 = conv1d(128, 1, 1, is_relu=False)
@@ -104,11 +134,11 @@ class ProposalFeatureGeneration(nn.Module):
         self.conv3d = nn.Conv3d(in_channels, 512, kernel_size=(32, 1, 1))
 
     def forward(self, action_score, xc_feat):
-        action_feat = self.prop_tcfg(action_score)  # B x 1 x 32 x T x T
-        action_feat = torch.squeeze(action_feat, 1)  # B x 32 x T x T
-        net_feat = self.prop_tcfg(xc_feat)  # B x 128 x 32 x T x T
-        net_feat = self.conv3d(net_feat)  # B x 512 x 1 x T x T
-        net_feat = torch.squeeze(net_feat, 2)  # B x 512 x T x T
+        action_feat = self.prop_tcfg(action_score)   # B x   1 x 32 x T x T
+        action_feat = torch.squeeze(action_feat, 1)  # B x  32 x  T x T
+        net_feat = self.prop_tcfg(xc_feat)           # B x 128 x 32 x T x T
+        net_feat = self.conv3d(net_feat)             # B x 512 x  1 x T x T
+        net_feat = torch.squeeze(net_feat, 2)        # B x 512 x  T x T
 
         return action_feat, net_feat
 
@@ -117,12 +147,12 @@ class ACRNet(nn.Module):
     """
     Setup action classification regression network (ACR)
     """
-    def __init__(self, in_channels=32):
+    def __init__(self, in_channels=32, activation):
         super(ACRNet, self).__init__()
         self.conv2d = nn.Sequential(
-            conv2d(in_channels, 256, 1),
+            conv2d(in_channels, 256, 1, relu_type=activation),
             nn.Dropout(p=0.3),
-            conv2d(256, 256, 1),
+            conv2d(256, 256, 1, relu_type=activation),
             nn.Dropout(p=0.3),
             conv2d(256, 1, 1, is_relu=False)
         )
@@ -137,12 +167,12 @@ class TBCNet(nn.Module):
     """
     Setup temporal boundary classification network (TBC)
     """
-    def __init__(self, in_channels=512):
+    def __init__(self, in_channels=512, activation):
         super(TBCNet, self).__init__()
         self.conv2d = nn.Sequential(
-            conv2d(in_channels, 256, 1),
+            conv2d(in_channels, 256, 1, relu_type=activation),
             nn.Dropout(p=0.3),
-            conv2d(256, 256, 1),
+            conv2d(256, 256, 1, relu_type=activation),
             nn.Dropout(p=0.3),
             conv2d(256, 2, 1, is_relu=False)
         )
@@ -160,13 +190,14 @@ class DBG(nn.Module):
     """
     Setup dense boundary generator framework (DBG)
     """
-    def __init__(self, feature_dim):
+    def __init__(self, feature_dim, activation):
         super(DBG, self).__init__()
 
-        self.DSBNet = DSBaseNet(feature_dim)
+        self.activation = activation
+        self.DSBNet = DSBaseNet(feature_dim, activation=activation)
         self.PropFeatGen = ProposalFeatureGeneration()
-        self.ACRNet = ACRNet()
-        self.TBCNet = TBCNet()
+        self.ACRNet = ACRNet(activation=activation)
+        self.TBCNet = TBCNet(activation=activation)
 
         self.best_loss = 999999
         self.reset_params() # reset all params by glorot uniform
@@ -192,7 +223,7 @@ class DBG(nn.Module):
     def forward(self, x):
         DSB_output = self.DSBNet(x)
         action_feat, net_feat = self.PropFeatGen(DSB_output['score'], DSB_output['xc_feat'])
-        iou = self.ACRNet(action_feat)
+        iou = self.ACRNet(action_feat, self.activation)
         prop_start, prop_end = self.TBCNet(net_feat)
 
         output_dict = {

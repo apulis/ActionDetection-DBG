@@ -41,6 +41,10 @@ class DBGConfig():
             os.makedirs(self.checkpoint_dir)
         if not os.path.exists(self.result_dir):
             os.makedirs(self.result_dir)
+        
+        """ Set model information """
+        model_info = data['model']
+        self.activation = model_info['activation']
 
         """ Set training information """
         training_info = data['training']

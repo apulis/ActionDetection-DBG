@@ -55,7 +55,7 @@ if __name__ == "__main__":
     torch.backends.cudnn.enabled = False # set False to speed up Conv3D operation
     with torch.no_grad():
         """ setup DBG model and load weights """
-        net = DBG(feature_dim)
+        net = DBG(feature_dim, dbg_config.activation)
         state_dict = torch.load(os.path.join(checkpoint_dir, 'DBG_checkpoint_best.ckpt'))
         net.load_state_dict(state_dict)
         net = nn.DataParallel(net, device_ids=[0]).cuda()

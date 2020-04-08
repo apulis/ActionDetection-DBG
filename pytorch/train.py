@@ -222,7 +222,7 @@ if __name__ == '__main__':
         exit()
     torch.backends.cudnn.enabled = False # set False to speed up Conv3D operation
     # set_seed(2020)
-    net = DBG(feature_dim)
+    net = DBG(feature_dim, dbg_config.activation)
     net = nn.DataParallel(net).cuda()
 
     # set weight decay for different parameters
